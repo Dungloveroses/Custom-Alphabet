@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Alphabet Studio v2.0</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e5edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .symbol-input:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        /* Custom scrollbar cho Modal Pickers */
+        .picker-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-user-secret text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        CipherCraft <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">v2.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Bảng mã hóa tùy chỉnh của riêng bạn</p>
+                </div>
+            </div>
+
+            <!-- Quick Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="saveMappingToStorage()" title="Save mapping to local storage" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk text-brand-400"></i>
+                    <span class="hidden md:inline">Lưu</span>
+                </button>
+                <button onclick="exportMappingJSON()" title="Export JSON" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download text-emerald-400"></i>
+                    <span class="hidden md:inline">Xuất</span>
+                </button>
+                <label class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload text-amber-400"></i>
+                    <span class="hidden md:inline">Nhập</span>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importMappingJSON(event)">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Cipher Key Customizer (5 cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-full max-h-[calc(100vh-7rem)]">
+                
+                <!-- Section Title & Info -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-key text-brand-500"></i> Mã Hóa Studio
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Tự tay tạo bảng mã hóa của riêng bạn</p>
+                    </div>
+                </div>
+
+                <!-- Info banner & Action Buttons -->
+                <div class="py-3 flex justify-between items-center border-b border-slate-800/80">
+                    <span class="text-xs text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-brand-400"></i> Nhấn nút <i class="fa-solid fa-list-ul text-[10px]"></i> để mở mục lục ký hiệu.
+                    </span>
+                    <button onclick="clearAllMappings()" class="text-xs px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-trash"></i> Xóa tất cả
+                    </button>
+                </div>
+
+                <!-- Character Filter Tabs -->
+                <div class="flex gap-2 pt-3 pb-2 text-xs border-b border-slate-800">
+                    <button onclick="switchTab('uppercase')" id="tab-uppercase" class="tab-btn font-medium px-3 py-1 rounded-lg bg-brand-600 text-white">A-Z</button>
+                    <button onclick="switchTab('lowercase')" id="tab-lowercase" class="tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800">a-z</button>
+                    <button onclick="switchTab('digits')" id="tab-digits" class="tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800">0-9 & Space</button>
+                </div>
+
+                <!-- Key Mapping Grid (Scrollable) -->
+                <div class="flex-1 overflow-y-auto pr-1 py-3 space-y-4" id="mappingGridContainer">
+                    
+                    <!-- Uppercase Group -->
+                    <div id="group-uppercase" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Lowercase Group -->
+                    <div id="group-lowercase" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5 hidden">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Digits & Special Group -->
+                    <div id="group-digits" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5 hidden">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                    <span id="mappedCountLabel">Số ký hiệu đã gán: 0 / 63</span>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Right Column: Encrypt / Decrypt Workspaces (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <!-- Workspace Tabs Toggle -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 flex gap-2">
+                <button onclick="switchWorkspace('encrypt')" id="mode-btn-encrypt" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md">
+                    <i class="fa-solid fa-lock"></i> Mã Hóa Văn Bản
+                </button>
+                <button onclick="switchWorkspace('decrypt')" id="mode-btn-decrypt" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800">
+                    <i class="fa-solid fa-lock-open"></i> Giải Mã Bảng Mã
+                </button>
+            </div>
+
+            <!-- ENCRYPTION PANEL -->
+            <div id="workspace-encrypt" class="flex-1 flex flex-col gap-4">
+                <!-- Input Box -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="plainTextInput" class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-font text-brand-400"></i> Văn Bản Đầu Vào
+                        </label>
+                        <span id="plainTextCharCount" class="text-xs text-slate-500">0 ký tự</span>
+                    </div>
+                    <textarea id="plainTextInput" rows="4" oninput="handleEncrypt()" placeholder="Nhập văn bản cần mã hóa ở đây...(Hãy ghi tiếng anh để có sự bảo mật tốt hơn)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500 transition font-mono resize-y"></textarea>
+                </div>
+
+                <!-- Live Encrypted Output Box -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3 flex-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> Kết Quả Mã Hóa
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyToClipboard('encryptedOutput')" class="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition flex items-center gap-1.5">
+                                <i class="fa-regular fa-copy"></i> Copy đầu ra
+                            </button>
+                        </div>
+                    </div>
+                    <div id="encryptedOutput" class="w-full flex-1 min-h-[120px] max-h-[260px] overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-emerald-300 font-mono break-all leading-relaxed whitespace-pre-wrap select-all select-text">
+                        <span class="text-slate-600 text-sm italic font-sans">Kết quả đã mã hóa sẽ xuất hiện ở đây theo thời gian thực...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DECRYPTION PANEL -->
+            <div id="workspace-decrypt" class="flex-1 flex flex-col gap-4 hidden">
+                <!-- Symbol Cipher Input -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="cipherInput" class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-icons text-indigo-400"></i> Ký hiệu Đã Mã Hóa
+                        </label>
+                        <span id="cipherCharCount" class="text-xs text-slate-500">0 ký tự</span>
+                    </div>
+                    <textarea id="cipherInput" rows="4" oninput="handleDecrypt()" placeholder="Dán ký hiệu đã mã hóa ở đây..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-lg text-indigo-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition font-mono resize-y"></textarea>
+                </div>
+
+                <!-- Decrypted Plain Text Result -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3 flex-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-brand-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-envelope-open-text"></i> Văn Bản Đã Giải Mã
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyToClipboard('decryptedOutput')" class="px-2.5 py-1 text-xs rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 transition flex items-center gap-1.5">
+                                <i class="fa-regular fa-copy"></i> Copy Output
+                            </button>
+                        </div>
+                    </div>
+                    <div id="decryptedOutput" class="w-full flex-1 min-h-[120px] max-h-[260px] overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 font-mono break-all leading-relaxed whitespace-pre-wrap select-all select-text">
+                        <span class="text-slate-600 text-sm italic font-sans">Kết quả giải mã sẽ xuất hiện ở đây theo thời gian thực...</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal: Symbol Picker (Mục Lục Ký Hiệu) -->
+    <div id="symbolPickerModal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-200" id="symbolPickerContent">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-brand-500"></i> Chọn ký hiệu thay thế cho: 
+                    <span id="pickerTargetLabel" class="px-3 py-0.5 bg-brand-500/20 text-brand-400 rounded-md font-mono border border-brand-500/30 font-bold ml-1">A</span>
+                </h3>
+                <button onclick="closeSymbolPicker()" class="text-slate-400 hover:text-white transition p-1 bg-slate-800 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Tabs -->
+            <div class="flex gap-2 p-3 border-b border-slate-800 bg-slate-900/50">
+                <button onclick="switchPickerTab('emoji')" id="p-tab-emoji" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white transition flex items-center justify-center gap-2"><span>😀</span> Emoji</button>
+                <button onclick="switchPickerTab('runic')" id="p-tab-runic" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2"><span>ᚠ</span> Runic</button>
+                <button onclick="switchPickerTab('symbols')" id="p-tab-symbols" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2"><span>★</span> Ký Hiệu Mật</button>
+            </div>
+
+            <!-- Modal Grid -->
+            <div class="flex-1 overflow-y-auto p-4 bg-slate-950 picker-scroll">
+                <div id="pickerGrid" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
+                    <!-- Javascript sẽ đổ biểu tượng vào đây -->
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-sm font-medium">Notification message</span>
+    </div>
+
+    <script>
+        // Các chữ cái cơ bản
+        const UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
+        const DIGITS = "0123456789".split("");
+        const SPECIAL = [" "];
+
+        const ALL_KEYS = [...UPPERCASE, ...LOWERCASE, ...DIGITS, ...SPECIAL];
+
+        // Dữ liệu cho Mục Lục Ký Hiệu (Đã mở rộng rất nhiều so với bản cũ)
+        const SYMBOL_CATALOG = {
+            emoji: Array.from("😀😁😂🤣😊😇🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🤩🥳😏😒😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑😬🙄😯😦😧😮😲🥱😴🤤😪😵🤐🥴🤢🤮🤧😷🤒🤕🤑🤠😈👿👹👺🤡💩👻💀☠️👽👾🤖🎃😺😸😹😻😼😽🙀😿😾🙈🙉🙊🐵🐒🦍🦧🐶🐕🦮🐕‍🦺🐩🐺🦊🦝🐱🐈🐈‍⬛🦁🐯🐅🐆🐴🐎🦄🦓🦌🦬🐮🐂🐃🐄🐷🐖🐗🐽🐏🐑🐐🐪🐫🦙🦒🐘🦣🦏🦛🐭🐁🐀🐹🐰🐇🐿️🦫🦔🦇🐻🐻‍❄️🐨🐼🦥🦦🦨🦘🦡🐾🦃🐔🐓🐣🐤🐥🐦🐧🕊️🦅🦆🦢🦉🦤🪶🦩🦚🦜🐸🐊🐢🦎🐍🐲🐉🦕🦖🐳🐋🐬🦭🐟🐠🐡🦈🐙🐚🐌🦋🐛🐜🐝🪲🐞🦗🪳🕷️🕸️🦂🦟🪰🪱🦠💐🌸💮🏵️🌹🥀🌺🌻🌼🌷🌱🪴🌲🌳🌴🌵🌾🌿☘️🍀🍁🍂🍃🍇🍈🍉🍊🍋🍌🍍🥭🍎🍏🍐🍑🍒🍓🫐🥝🍅🫒🥥🥑🍆🥔🥕🌽🌶️🫑🥒🥬🥦🧄🧅🍄🥜🌰🍞🥐🥖🫓🥨🥯🥞🧇🧀🍖🍗🥩🥓🍔🍟🍕🌭🥪🌮🌯🫔🥙🧆🥚🍳🥘🍲🫕🥣🥗🍿🧈🧂🥫🍱🍘🍙🍚🍛🍜🍝🍠🍢🍣🍤🍥🥮🍡🥟🥠🥡🦀🦞🦐🦑🦪🍦🍧🍨🍩🍪🎂🍰🧁🥧🍫🍬🍭🍮🍯🍼🥛☕🫖🍵🍶🍾🍷🍸🍹🍺🍻🥂🥃🥤🧋🧃🧉🧊🥢🍽️🍴🥄🔪🏺🌍🌎🌏🌐🗺️🗾🧭🏔️⛰️🌋🗻🏕️🏖️🏜️🏝️🏞️🏟️🏛️🏗️🧱🪨🪵🛖🏘️🏚️🏠🏡🏢🏣🏤🏥🏦🏨🏩🏪🏫🏬🏭🏯🏰💒🗼🗽⛪🕌🛕🕍⛩️🕋⛲⛺🌁🌃🏙️🌄🌅🌆🌇🌉♨️🎠🎡🎢💈🎪🚂🚃🚄🚅🚆🚇🚈🚉🚊🚝🚞🚋🚌🚍🚎🚐🚑🚒🚓🚔🚕🚖🚗🚘🚙🛻🚚🚛🚜🏎️🏍️🛵🦽🦼🛺🚲🛴🛹🛼🚏🛣️🛤️🛢️⛽🚨🚥🚦🛑🚧⚓⛵🛶🚤🛳️⛴️🛥️🚢✈️🛩️🛫🛬🪂💺🚁🚟🚠🚡🛰️🚀🛸🛎️🧳⌛⏳⌚⏰⏱️⏲️🕰️🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜🌡️☀️🌝🌞🪐⭐🌟🌠🌌☁️⛅⛈️🌤️🌥️🌦️🌧️🌨️🌩️🌪️🌫️🌬️🌀🌈🌂☂️☔⛱️⚡❄️☃️⛄☄️🔥💧🌊🎃🎄🎆🎇🧨✨🎈🎉🎊🎋🎍🎎🎏🎐🎑🧧🎀🎁🎗️🎟️🎫🎖️🏆🏅🥇🥈🥉⚽⚾🥎🏀🏐🏈🏉🎾🥏🎳🏏🏑🏒🥍🏓🏸🥊🥋🥅⛳⛸️🎣🤿🎽🎿🛷🥌🎯🪀🪁🎱🔮🪄🧿🎮🕹️🎰🎲🧩🧸🪅🪆♠️♥️♦️♣️♟️🃏🀄🎴🎭🖼️🎨🧵🪡🧶🪢👓🕶️🥽🥼🦺👔👕👖🧣🧤🧥🧦👗👘🥻🩱🩲🩳👙👚👛👜👝🛍️🎒🩴👞👟🥾🥿👠👡🩰👢👑👒🎩🎓🧢🪖⛑️📿💄💍💎🔇🔈🔉🔊📢📣📯🔔🔕🎼🎵🎶🎙️🎚️🎛️🎤🎧📻🎷🪗🎸🎹🎺🎻🪕🥁🪘📱📲☎️📞📟📠🔋🔌💻🖥️🖨️⌨️🖱️🖲️️💽💾💿📀🧮🎥🎞️📽️🎬📺📷📸📹📼🔍🔎🕯️💡🔦🏮🪔📔📕📖📗📘📙📚📓📒📃📜📄📰🗞️📑🔖🏷️💰🪙💴💵💶💷💸💳🧾💱💲✉️📧📨📩📤📥📦📫📪📬📭📮🗳️✏️✒️🖋️🖊️🖌️🖍️📝💼📁📂🗂️📅📆🗒️🗓️📇📈📉📊📋📌📍📎🖇️📏📐✂️🗃️🗄️🗑️🔒🔓🔏🔐🔑🗝️🔨🪓⛏️⚒️🛠️🗡️⚔️🔫🪃🏹🛡️🪚🔧🪛🔩⚙️🗜️⚖️🦯🔗⛓️🪝🧰🧲🪜⚗️🧪🧫🧬🔬🔭📡💉🩸💊🩹🩺🚪🛗🪞🪟🛏️🛋️🪑🚽🪠🚿🛁🪤🪒🧴🧷🧹🧺🧻🪣🧼🪥🧽🧯🛒🚬⚰️🪦⚱️🗿🪧"),
+            runic: Array.from("ᚠᚡᚢᚣᚤᚥᚦᚧᚨᚩᚪᚫᚬᚭᚮᚯᚰᚱᚲᚳᚴᚵᚶᚷᚸᚹᚺᚻᚼᚽᚾᚿᛀᛁᛂᛃᛄᛅᛆᛇᛈᛉᛊᛋᛌᛍᛎᛏᛐᛑᛒᛓᛔᛕᛖᛗᛘᛙᛚᛛᛜᛝᛞᛟᛠᛡᛢᛣᛤᛥᛦᛧᛨᛩᛪ᛫᛬᛭ᛮᛯᛰ"),
+            symbols: Array.from("★☆✡✦✧✩✪✫✬✭✮✯✰⁂⁎⁑✢✣✤✥✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿❀❁❂❃❄❅❆❇❈❉❊❋▲▼◀▶◆◇○◎●◐◑◒◓◔◕◖◗◘◙◚◛◜◝◞◟◠◡◢◣◤◥◦◧◨◩◪◫◬◭◮◯◰◱◲◳◴◵◶◷◸◹◺◻◼◽◾▖▗▘▙▚▛▜▝▞▟♠♡♢♣♤♥♦♧♨♩♪♫♬♭♮♯♰♱♲♳♴♵♶♷♸♹♺♻♼♽♾♿⚀⚁⚂⚃⚄⚅⚆⚇⚈⚉⚊⚋⚌⚍⚎⚏☰☱☲☳☴☵☶☷☸☹☺☻☼☽☾☿♀♁♂♃♄♅♆♇♈♉♊♋♌♍♎♏♐♑♒♓♔♕♖♗♘♙♚♛♜♝♞♟∑⨍❡⌘⌶⚯⯎└⏣⎈¶⎇®§┼⋃⟎✕¥☡∈ƒ⦸¡⏦⯐│☍⎌⊙℗⧉∿∫⟲⍟⍝⏥⌮⎚⏧∅⠁⠃⠇⠏⠟⠿⡿⣿⢀")
+        };
+
+        // State quản lý Modal Picker
+        let currentTargetChar = null;
+        let currentPickerTab = 'emoji';
+
+        // Trạng thái bảng mã hiện tại
+        let keyMap = {};
+
+        window.onload = function() {
+            // KHỞI TẠO BẢNG MÃ TRỐNG THEO YÊU CẦU CỦA BẠN (Không dùng mặc định)
+            ALL_KEYS.forEach(key => keyMap[key] = "");
+
+            // Nếu bạn đã lưu cấu hình trước đó, nó sẽ đè lên bảng trống
+            loadMappingFromStorage(false);
+            
+            renderMappingGrid();
+            updateMappedCount();
+            handleEncrypt();
+        };
+
+        // Render input fields for key map
+        function renderMappingGrid() {
+            renderGroup('group-uppercase', UPPERCASE);
+            renderGroup('group-lowercase', LOWERCASE);
+            renderGroup('group-digits', [...DIGITS, ...SPECIAL]);
+        }
+
+        function renderGroup(groupId, charList) {
+            const container = document.getElementById(groupId);
+            container.innerHTML = "";
+
+            charList.forEach(char => {
+                const label = char === " " ? "Space" : char;
+                const val = keyMap[char] || "";
+
+                const item = document.createElement("div");
+                item.className = "bg-slate-950/80 border border-slate-800 rounded-xl p-2 pl-3 flex items-center justify-between gap-3 hover:border-slate-700 transition";
+                
+                item.innerHTML = `
+                    <span class="text-xs font-mono font-bold text-slate-400 min-w-[16px]">${label}</span>
+                    <i class="fa-solid fa-arrow-right-long text-slate-600 text-[10px]"></i>
+                    <div class="flex items-center gap-1.5 w-full flex-1">
+                        <input type="text" data-char="${char}" value="${escapeHtml(val)}" 
+                            oninput="updateSingleKey(this)"
+                            placeholder="Trống"
+                            class="symbol-input flex-1 w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-center text-emerald-400 font-mono focus:outline-none focus:border-brand-500 transition">
+                        
+                        <!-- NÚT MỞ MỤC LỤC CHỌN KÝ HIỆU -->
+                        <button onclick="openSymbolPicker('${char}')" title="Mở mục lục chọn ký hiệu" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-1.5 rounded-lg border border-slate-700 transition flex items-center justify-center h-8 w-9 shadow-sm shrink-0">
+                            <i class="fa-solid fa-list-ul text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Helper to escape HTML attributes
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Update single key in map from typing directly
+        function updateSingleKey(inputElem) {
+            const char = inputElem.getAttribute("data-char");
+            const symbol = inputElem.value;
+            keyMap[char] = symbol;
+            updateMappedCount();
+            handleEncrypt();
+            handleDecrypt();
+        }
+
+        // ====== LOGIC CHO MODAL MỤC LỤC KÝ HIỆU (SYMBOL PICKER) ====== //
+        
+        function openSymbolPicker(char) {
+            currentTargetChar = char;
+            const label = char === " " ? "Space (Dấu Cách)" : char;
+            document.getElementById('pickerTargetLabel').innerText = label;
+            
+            const modal = document.getElementById('symbolPickerModal');
+            const content = document.getElementById('symbolPickerContent');
+            
+            modal.classList.remove('hidden');
+            // Timeout nhỏ để kích hoạt hiệu ứng CSS transition
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            renderPickerGrid();
+        }
+
+        function closeSymbolPicker() {
+            const modal = document.getElementById('symbolPickerModal');
+            const content = document.getElementById('symbolPickerContent');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                currentTargetChar = null;
+            }, 200); // Đợi CSS transition chạy xong
+        }
+
+        function switchPickerTab(tab) {
+            currentPickerTab = tab;
+            
+            // Đặt lại style các nút tab trong Modal
+            document.querySelectorAll('.p-tab-btn').forEach(btn => {
+                btn.className = "p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2";
+            });
+            document.getElementById(`p-tab-${tab}`).className = "p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white transition flex items-center justify-center gap-2 shadow-md";
+            
+            renderPickerGrid();
+        }
+
+        function renderPickerGrid() {
+            const grid = document.getElementById('pickerGrid');
+            grid.innerHTML = ''; // Clear cũ
+            
+            const symbols = SYMBOL_CATALOG[currentPickerTab];
+            symbols.forEach(sym => {
+                const btn = document.createElement('button');
+                btn.className = "h-10 text-xl flex items-center justify-center bg-slate-900 border border-slate-800/50 rounded-lg hover:border-brand-500 hover:bg-slate-800 hover:scale-110 hover:z-10 transition cursor-pointer";
+                btn.innerText = sym;
+                btn.onclick = () => selectSymbolFromPicker(sym);
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectSymbolFromPicker(sym) {
+            if (currentTargetChar !== null) {
+                // Cập nhật State
+                keyMap[currentTargetChar] = sym;
+                
+                // Cập nhật ô nhập (Input) trên UI
+                const input = document.querySelector(`input[data-char="${currentTargetChar}"]`);
+                if (input) {
+                    input.value = sym;
+                    
+                    // Thêm hiệu ứng chớp xanh lá để báo hiệu đã chọn thành công
+                    input.classList.add('border-emerald-500', 'bg-emerald-500/10');
+                    setTimeout(() => {
+                        input.classList.remove('border-emerald-500', 'bg-emerald-500/10');
+                    }, 500);
+                }
+                
+                updateMappedCount();
+                handleEncrypt();
+                handleDecrypt();
+                closeSymbolPicker();
+            }
+        }
+        // ============================================================== //
+
+
+        // Tab Navigation for Key Grouping
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800";
+            });
+            document.getElementById(`tab-${tabName}`).className = "tab-btn font-medium px-3 py-1 rounded-lg bg-brand-600 text-white";
+
+            document.querySelectorAll('.tab-group').forEach(group => group.classList.add('hidden'));
+            document.getElementById(`group-${tabName}`).classList.remove('hidden');
+        }
+
+        // Workspace Switcher (Encrypt / Decrypt)
+        function switchWorkspace(mode) {
+            const encBtn = document.getElementById('mode-btn-encrypt');
+            const decBtn = document.getElementById('mode-btn-decrypt');
+            const encPanel = document.getElementById('workspace-encrypt');
+            const decPanel = document.getElementById('workspace-decrypt');
+
+            if (mode === 'encrypt') {
+                encBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md";
+                decBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800";
+                encPanel.classList.remove('hidden');
+                decPanel.classList.add('hidden');
+            } else {
+                decBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md";
+                encBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800";
+                decPanel.classList.remove('hidden');
+                encPanel.classList.add('hidden');
+            }
+        }
+
+        // Live Encryption Handler
+        function handleEncrypt() {
+            const plainText = document.getElementById("plainTextInput").value;
+            document.getElementById("plainTextCharCount").innerText = `${plainText.length} characters`;
+
+            if (!plainText) {
+                document.getElementById("encryptedOutput").innerHTML = `<span class="text-slate-600 text-sm italic font-sans">Kết quả đã mã hóa sẽ xuất hiện ở đây theo thời gian thực...</span>`;
+                return;
+            }
+
+            let result = "";
+            for (let char of plainText) {
+                if (keyMap.hasOwnProperty(char) && keyMap[char] !== "") {
+                    result += keyMap[char];
+                } else {
+                    result += char; // Fallback to character itself if unmapped
+                }
+            }
+
+            document.getElementById("encryptedOutput").innerText = result;
+        }
+
+        // Live Decryption Handler
+        function handleDecrypt() {
+            const cipherText = document.getElementById("cipherInput").value;
+            document.getElementById("cipherCharCount").innerText = `${cipherText.length} characters`;
+
+            if (!cipherText) {
+                document.getElementById("decryptedOutput").innerHTML = `<span class="text-slate-600 text-sm italic font-sans">Kết quả giải mã sẽ xuất hiện ở đây theo thời gian thực...</span>`;
+                return;
+            }
+
+            const pairs = Object.entries(keyMap)
+                .filter(([k, v]) => v !== "")
+                .sort((a, b) => b[1].length - a[1].length);
+
+            let remaining = cipherText;
+            let result = "";
+
+            while (remaining.length > 0) {
+                let matched = false;
+                for (let [origChar, symbol] of pairs) {
+                    if (remaining.startsWith(symbol)) {
+                        result += origChar;
+                        remaining = remaining.slice(symbol.length);
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (!matched) {
+                    const codePoint = Array.from(remaining)[0];
+                    result += codePoint;
+                    remaining = remaining.slice(codePoint.length);
+                }
+            }
+
+            document.getElementById("decryptedOutput").innerText = result;
+        }
+
+        // Tiện Ích
+        function clearAllMappings() {
+            ALL_KEYS.forEach(key => keyMap[key] = "");
+            renderMappingGrid();
+            updateMappedCount();
+            handleEncrypt();
+            handleDecrypt();
+            showToast('Đã xóa tất cả thiết lập bảng mã.', 'trash', 'rose');
+        }
+
+        function updateMappedCount() {
+            const count = Object.values(keyMap).filter(v => v !== "").length;
+            document.getElementById("mappedCountLabel").innerText = `Số ký hiệu đã gán: ${count} / ${ALL_KEYS.length}`;
+        }
+
+        // Copy Clipboard Helper
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            if (!text || text.includes("sẽ xuất hiện ở đây")) {
+                showToast("Chưa có nội dung để copy!", "triangle-exclamation", "amber");
+                return;
+            }
+
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand("copy");
+                showToast("Đã copy vào bộ nhớ tạm!", "copy", "emerald");
+            } catch (err) {
+                showToast("Lỗi copy!", "xmark", "rose");
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // Local Storage Handler
+        function saveMappingToStorage() {
+            localStorage.setItem("cipher_craft_mapping_v2", JSON.stringify(keyMap));
+            showToast("Đã lưu bảng mã vào trình duyệt!", "floppy-disk", "emerald");
+        }
+
+        function loadMappingFromStorage(notify = true) {
+            const saved = localStorage.getItem("cipher_craft_mapping_v2");
+            if (saved) {
+                try {
+                    keyMap = JSON.parse(saved);
+                    if (notify) showToast("Đã tải bảng mã đã lưu!", "folder-open", "emerald");
+                } catch (e) {
+                    console.error("Failed to parse saved map", e);
+                }
+            }
+        }
+
+        // Export JSON
+        function exportMappingJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(keyMap, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "custom_cipher_map.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Đã xuất file JSON thành công!", "file-export", "emerald");
+        }
+
+        // Import JSON
+        function importMappingJSON(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const importedMap = JSON.parse(e.target.result);
+                    keyMap = { ...keyMap, ...importedMap };
+                    renderMappingGrid();
+                    updateMappedCount();
+                    handleEncrypt();
+                    handleDecrypt();
+                    showToast("Nhập bảng mã thành công!", "file-import", "emerald");
+                } catch (err) {
+                    showToast("File JSON không hợp lệ!", "triangle-exclamation", "rose");
+                }
+            };
+            if (event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0]);
+            }
+        }
+
+        // Toast Feedback System
+        function showToast(message, iconName = 'circle-check', color = 'emerald') {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMessage");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMsg.innerText = message;
+            toastIcon.className = `fa-solid fa-${iconName} text-${color}-400 text-lg`;
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
