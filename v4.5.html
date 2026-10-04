@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Alphabet Studio v4.5 </title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e5edff',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .symbol-input:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .picker-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-user-secret text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        Dxung studio encoding <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">v4.5.0 AI Homophonic</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Bảng mã hóa tích hợp dịch thuật & đa ký hiệu</p>
+                </div>
+            </div>
+
+            <!-- Quick Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openPresetManager()" title="Quản lý bảng mã đã lưu" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-folder-open text-sky-400"></i>
+                    <span class="hidden md:inline">Bảng mã</span>
+                </button>
+                <button onclick="saveMappingToStorage()" title="Lưu vào bảng mã đang dùng" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk text-brand-400"></i>
+                    <span class="hidden md:inline">Lưu</span>
+                </button>
+                <button onclick="shareMappingLink()" title="Copy link chia sẻ bảng mã" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-link text-indigo-400"></i>
+                    <span class="hidden md:inline">Chia sẻ</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Cipher Key Customizer -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-full max-h-[calc(100vh-7rem)]">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-key text-brand-500"></i> Mã Hóa Studio <span id="activePresetLabel" class="text-xs font-normal text-slate-400 truncate max-w-[10rem]"></span>
+                        </h2>
+                    </div>
+                </div>
+                
+                <div class="py-3 flex justify-between items-center border-b border-slate-800/80">
+                    <span class="text-xs text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-brand-400"></i> Nhấn nút <i class="fa-solid fa-list-ul text-[10px]"></i> chọn ký hiệu.
+                    </span>
+                    <button onclick="clearAllMappings()" class="text-xs px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-trash"></i> Xóa bảng mã
+                    </button>
+                </div>
+
+                <!-- Lựa chọn Trường Hợp (Cases 1-10) -->
+                <div class="flex items-center justify-between pt-3 pb-3 border-b border-slate-800/80">
+                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-brand-400"></i> Lớp ký hiệu:
+                    </label>
+                    <div class="flex items-center gap-2"><label class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="Nhập file .json vào lớp đang chọn">Nhập vào lớp<input type="file" accept=".json" class="hidden" onchange="importIntoCurrentCase(event)"></label><select id="caseSelector" onchange="changeCaseIndex(this.value)" class="bg-slate-950 border border-slate-700 rounded-lg text-sm text-brand-400 font-bold px-3 py-1.5 focus:outline-none focus:border-brand-500 cursor-pointer">
+                        <option value="0">Trường hợp 1</option>
+                        <option value="1">Trường hợp 2</option>
+                        <option value="2">Trường hợp 3</option>
+                        <option value="3">Trường hợp 4</option>
+                        <option value="4">Trường hợp 5</option>
+                        <option value="5">Trường hợp 6</option>
+                        <option value="6">Trường hợp 7</option>
+                        <option value="7">Trường hợp 8</option>
+                        <option value="8">Trường hợp 9</option>
+                        <option value="9">Trường hợp 10</option>
+                    </select></div>
+                </div>
+
+                <div class="flex gap-2 pt-3 pb-2 text-xs border-b border-slate-800">
+                    <button onclick="switchTab('uppercase')" id="tab-uppercase" class="tab-btn font-medium px-3 py-1 rounded-lg bg-brand-600 text-white">A-Z</button>
+                    <button onclick="switchTab('lowercase')" id="tab-lowercase" class="tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800">a-z</button>
+                    <button onclick="switchTab('digits')" id="tab-digits" class="tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800">0-9 & Space</button>
+                </div>
+                <div class="flex-1 overflow-y-auto pr-1 py-3 space-y-4" id="mappingGridContainer">
+                    <div id="group-uppercase" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+                    <div id="group-lowercase" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5 hidden"></div>
+                    <div id="group-digits" class="tab-group grid grid-cols-1 sm:grid-cols-2 gap-2.5 hidden"></div>
+                </div>
+                <div class="pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                    <span id="mappedCountLabel">Số ký tự đã gán: 0 / 63</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Encrypt / Decrypt Workspaces -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 flex gap-2">
+                <button onclick="switchWorkspace('encrypt')" id="mode-btn-encrypt" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md">
+                    <i class="fa-solid fa-lock"></i> Mã Hóa Văn Bản
+                </button>
+                <button onclick="switchWorkspace('decrypt')" id="mode-btn-decrypt" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800">
+                    <i class="fa-solid fa-lock-open"></i> Giải Mã Bảng Mã
+                </button>
+            </div>
+
+            <!-- ENCRYPTION PANEL -->
+            <div id="workspace-encrypt" class="flex-1 flex flex-col gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="plainTextInput" class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-font text-brand-400"></i> Văn Bản Đầu Vào (Tiếng Việt)
+                        </label>
+                        <span id="plainTextCharCount" class="text-xs text-slate-500">0 ký tự</span>
+                    </div>
+                    <!-- Nút Bật/Tắt Dịch Thuật -->
+                    <label class="flex items-center gap-2 text-sm text-brand-300 bg-brand-500/10 p-2 rounded-lg border border-brand-500/20 cursor-pointer w-fit">
+                        <input type="checkbox" id="translateToEnToggle" checked onchange="handleEncrypt()" class="w-4 h-4 accent-brand-500 rounded">
+                        <i class="fa-solid fa-language text-brand-400"></i> Dịch sang Tiếng Anh trước khi mã hóa
+                    </label>
+                    <textarea id="plainTextInput" rows="3" oninput="handleEncrypt()" placeholder="Nhập văn bản tiếng Việt..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500 transition font-mono resize-y"></textarea>
+                    
+                    <div id="intermediateEnBox" class="text-xs text-slate-400 font-mono hidden">
+                        Bản dịch Tiếng Anh: <span id="intermediateEnText" class="text-amber-300">...</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3 flex-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> Kết Quả Mã Hóa
+                        </label>
+                        <button onclick="copyToClipboard('encryptedOutput')" class="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div id="encryptedOutput" class="w-full flex-1 min-h-[120px] max-h-[260px] overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-4 text-lg text-emerald-300 font-mono break-all leading-relaxed whitespace-pre-wrap select-all select-text">
+                        <span class="text-slate-600 text-sm italic font-sans">Kết quả đã mã hóa sẽ xuất hiện ở đây...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DECRYPTION PANEL -->
+            <div id="workspace-decrypt" class="flex-1 flex flex-col gap-4 hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="cipherInput" class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-icons text-indigo-400"></i> Ký hiệu Đã Mã Hóa
+                        </label>
+                        <span id="cipherCharCount" class="text-xs text-slate-500">0 ký tự</span>
+                    </div>
+                    <!-- Nút Bật/Tắt Dịch Thuật ngược lại -->
+                    <label class="flex items-center gap-2 text-sm text-indigo-300 bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/20 cursor-pointer w-fit">
+                        <input type="checkbox" id="translateToViToggle" checked onchange="handleDecrypt()" class="w-4 h-4 accent-indigo-500 rounded">
+                        <i class="fa-solid fa-language text-indigo-400"></i> Dịch kết quả từ Tiếng Anh về Tiếng Việt
+                    </label>
+                    <textarea id="cipherInput" rows="3" oninput="handleDecrypt()" placeholder="Dán ký hiệu đã mã hóa ở đây..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-lg text-indigo-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition font-mono resize-y"></textarea>
+                    
+                    <div id="intermediateViBox" class="text-xs text-slate-400 font-mono hidden">
+                        Tiếng Anh sau giải mã: <span id="intermediateViText" class="text-amber-300">...</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3 flex-1">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-brand-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-envelope-open-text"></i> Văn Bản Cuối Cùng
+                        </label>
+                        <button onclick="copyToClipboard('decryptedOutput')" class="px-2.5 py-1 text-xs rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div id="decryptedOutput" class="w-full flex-1 min-h-[120px] max-h-[260px] overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 font-mono break-all leading-relaxed whitespace-pre-wrap select-all select-text">
+                        <span class="text-slate-600 text-sm italic font-sans">Kết quả giải mã sẽ xuất hiện ở đây...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Picker, Toast, etc. -->
+    <div id="symbolPickerModal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-200" id="symbolPickerContent">
+            <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-brand-500"></i> Chọn ký hiệu cho: 
+                    <span id="pickerTargetLabel" class="px-3 py-0.5 bg-brand-500/20 text-brand-400 rounded-md font-mono border border-brand-500/30 font-bold ml-1">A</span>
+                </h3>
+                <button onclick="closeSymbolPicker()" class="text-slate-400 hover:text-white transition p-1 bg-slate-800 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="flex gap-2 p-3 border-b border-slate-800 bg-slate-900/50">
+                <button onclick="switchPickerTab('emoji')" id="p-tab-emoji" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white transition flex items-center justify-center gap-2"><span>😀</span> Emoji</button>
+                <button onclick="switchPickerTab('runic')" id="p-tab-runic" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2"><span>ᚠ</span> Runic</button>
+                <button onclick="switchPickerTab('symbols')" id="p-tab-symbols" class="p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2"><span>★</span> Ký Hiệu Mật</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-slate-950 picker-scroll">
+                <div id="pickerGrid" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="presetModal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4" onclick="if (event.target === this) closePresetManager()">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-slate-800">
+                <h3 class="text-lg font-bold text-white">Quản lý bảng mã</h3>
+                <button onclick="closePresetManager()" class="text-slate-400 hover:text-white transition bg-slate-800 rounded-lg w-8 h-8 flex items-center justify-center">✕</button>
+            </div>
+            <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
+                <label for="presetNameInput" class="text-xs font-semibold text-slate-300">Lưu bảng mã hiện tại thành bản mới</label>
+                <div class="flex gap-2">
+                    <input id="presetNameInput" type="text" maxlength="40" placeholder="Ví dụ: Bảng mã Emoji Mật" onkeydown="if (event.key === 'Enter') savePresetAsNew()" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500">
+                    <button onclick="savePresetAsNew()" class="px-4 py-2 text-sm font-medium rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition shrink-0">Lưu mới</button>
+                </div>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button onclick="exportAllPresets()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">Xuất tất cả (sao lưu)</button>
+                    <label class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">Nhập file<input type="file" accept=".json" class="hidden" onchange="importPresetFile(event)"></label>
+                </div>
+                <div id="presetDirtyNote" class="text-xs text-amber-400 hidden"></div>
+            </div>
+            <div id="presetList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-slate-950"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-sm font-medium">Notification message</span>
+    </div>
+
+    <script>
+        const UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
+        const DIGITS = "0123456789".split("");
+        const SPECIAL = [" "];
+        const ALL_KEYS = [...UPPERCASE, ...LOWERCASE, ...DIGITS, ...SPECIAL];
+
+        const graphemeSeg = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
+        const toGraphemes = str => graphemeSeg ? Array.from(graphemeSeg.segment(str), x => x.segment) : Array.from(str);
+
+        const SYMBOL_CATALOG = {
+            emoji: toGraphemes("😀😁😂🤣😊😇🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🤩🥳😏😒😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑😬🙄😯😦😧😮😲🥱😴🤤😪😵🤐🥴🤢🤮🤧😷🤒🤕🤑🤠😈👿👹👺🤡💩👻💀☠️👽👾🤖🎃😺😸😹😻😼😽🙀😿😾🙈🙉🙊🐵🐒🦍🦧🐶🐕🦮🐕‍🦺🐩🐺🦊🦝🐱🐈🐈‍⬛🦁🐯🐅🐆🐴🐎🦄🦓🦌🦬🐮🐂🐃🐄🐷🐖🐗🐽🐏🐑🐐🐪🐫🦙🦒🐘🦣🦏🦛🐭🐁🐀🐹🐰🐇🐿️🦫🦔🦇🐻🐻‍❄️🐨🐼🦥🦦🦨🦘🦡🐾🦃🐔🐓🐣🐤🐥🐦🐧🕊️🦅🦆🦢🦉🦤🪶🦩🦚🦜🐸🐊🐢🦎🐍🐲🐉🦕🦖🐳🐋🐬🦭🐟🐠🐡🦈🐙🐚🐌🦋🐛🐜🐝🪲🐞🦗🪳🕷️🕸️🦂🦟🪰🪱🦠💐🌸💮🏵️🌹🥀🌺🌻🌼🌷🌱🪴🌲🌳🌴🌵🌾🌿☘️🍀🍁🍂🍃🍇🍈🍉🍊🍋🍌🍍🥭🍎🍏🍐🍑🍒🍓🫐🥝🍅🫒🥥🥑🍆🥔🥕🌽🌶️🫑🥒🥬🥦🧄🧅🍄🥜🌰🍞🥐🥖🫓🥨🥯🥞🧇🧀🍖🍗🥩🥓🍔🍟🍕🌭🥪🌮🌯🫔🥙🧆🥚🍳🥘🍲🫕🥣🥗🍿🧈🧂🥫🍱🍘🍙🍚🍛🍜🍝🍠🍢🍣🍤🍥🥮🍡🥟🥠🥡🦀🦞🦐🦑🦪🍦🍧🍨🍩🍪🎂🍰🧁🥧🍫🍬🍭🍮🍯🍼🥛☕🫖🍵🍶🍾🍷🍸🍹🍺🍻🥂🥃🥤🧋🧃🧉🧊🥢🍽️🍴🥄🔪🏺🌍🌎🌏🌐🗺️🗾🧭🏔️⛰️🌋🗻🏕️🏖️🏜️🏝️🏞️🏟️🏛️🏗️🧱🪨🪵🛖🏘️🏚️🏠🏡🏢🏣🏤🏥🏦🏨🏩🏪🏫🏬🏭🏯🏰💒🗼🗽⛪🕌🛕🕍⛩️🕋⛲⛺🌁🌃🏙🌄🌅🌆🌇🌉♨️🎠🎡🎢💈🎪🚂🚃🚄🚅🚆🚇🚈🚉🚊🚝🚞🚋🚌🚍🚎🚐🚑🚒🚓🚔🚕🚖🚗🚘🚙🛻🚚🚛🚜🏎️🏍️🛵🦽🦼🛺🚲🛴🛹🛼🚏🛣️🛤️🛢️⛽🚨🚥🚦🛑🚧⚓⛵🛶🚤🛳️⛴️🛥🚢✈️🛩️🛫🛬🪂💺🚁🚟🚠🚡🛰️🚀🛸🛎️🧳⌛⏳⌚⏰⏱️⏲️🕰️🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜🌡️️☀️🌝🌞🪐⭐🌟🌠🌌☁️⛅⛈️🌤️🌥️🌦️🌧️🌨🌩️🌪️🌫🌬️🌀🌈🌂☂️️☔⛱️⚡❄️☃️⛄☄️🔥💧🌊🎃🎄🎆🎇🧨✨🎈🎉🎊🎋🎍🎎🎏🎐🎑🧧🎀🎁🎗️🎟️🎫🎖️🏆🏅🥇🥈🥉⚽⚾🥎🏀🏐🏈🏉🎾🥏🎳🏏🏑🏒🥍🏓🏸🥊🥋🥅⛳⛸️🎣🤿🎽🎿🛷🥌🎯🪀🪁🎱🔮🪄🧿🎮🕹️🎰🎲🧩🧸🪅🪆♠️♥️♦️♣️♟️🃏🀄🎴🎭🖼️🎨🧵🪡🧶🪢👓🕶️🥽🥼🦺👔👕👖🧣🧤🧥🧦👗👘🥻🩱🩲🩳👙👚👛👜👝🛍️🎒🩴👞👟🥾🥿👠👡🩰👢👑👒🎩🎓🧢🪖⛑️📿💄💍💎🔇🔈🔉🔊📢📣📯🔔🔕🎼🎵🎶🎙️🎚️🎛️🎤🎧📻🎷🪗🎸🎹🎺🎻🪕🥁🪘📱📲☎️📞📟📠🔋🔌💻🖥️🖨️⌨️🖱️🖲💽💾💿📀🧮🎥🎞️📽️🎬📺📷📸📹📼🔍🔎🕯️💡🔦🏮🪔📔📕📖📗📘📙📚📓📒📃📜📄📰🗞️📑🔖🏷️💰🪙💴💵💶💷💸💳🧾💱💲✉️📧📨📩📤📥📦📫📪📬📭📮🗳️✏️✒️🖋️🖊️🖌️🖍️📝💼📁📂🗂️📅📆🗒️🗓️📇📈📉📊📋📌📍📎🖇️📏📐✂️🗃️🗄️🗑️🔒🔓🔏🔐🔑🗝️🔨🪓⛏️⚒️🛠️🗡️⚔️🔫🪃🏹🛡️🪚🔧🪛🔩⚙️🗜⚖️🦯🔗⛓️🪝🧰🧲🪜⚗️🧪🧫🧬🔬🔭📡💉🩸💊🩹🩺🚪🛗🪞🪟🛏️🛋️🪑🚽🪠🚿🛁🪤🪒🧴🧷🧹🧺🧻🪣🧼🪥🧽🧯🛒🚬⚰️🪦⚱️🗿🪧"),
+            runic: toGraphemes("ᚠᚡᚢᚣᚤᚥᚦᚧᚨᚩᚪᚫᚬᚭᚮᚯᚰᚱᚲᚳᚴᚵᚶᚷᚸᚹᚺᚻᚼᚽᚾᚿᛀᛁᛂᛃᛄᛅᛆᛇᛈᛉᛊᛋᛌᛍᛎᛏᛐᛑᛒᛓᛔᛕᛖᛗᛘᛙᛚᛛᛜᛝᛞᛟᛠᛡᛢᛣᛤᛥᛦᛧᛨᛩᛪ᛫᛬᛭ᛮᛯᛰ"),
+            symbols: toGraphemes("★☆✡✦✧✩✪✫✬✭✮✯✰⁂⁎⁑✢✣✤✥✱✲✳✴✵✶✷✸✹✺✻✼✽✾✿❀❁❂❃❄❅❆❇❈❉❊❋▲▼◀▶◆◇○◎●◐◑◒◓◔◕◖◗◘◙◚◛◜◝◞◟◠◡◢◣◤◥◦◧◨◩◪◫◬◭◮◯◰◱◲◳◴◵◶◷◸◹◺◻◼◽◾▖▗▘▙▚▛▜▝▞▟♠♡♢♣♤♥♦♧♨♩♪♫♬♭♮♯♰♱♲♳♴♵♶♷♸♹♺♻♼♽♾♿⚀⚁⚂⚃⚄⚅⚆⚇⚈⚉⚊⚋⚌⚍⚎⚏☰☱☲☳☴☵☶☷☸☹☺☻☼☽☾☿♀♁♂♃♄♅♆♇♈♉♊♋♌♍♎♏♐♑♒♓♔♕♖♗♘♙♚♛♜♝♞♟∑⨍❡⌘⌶⚯⯎└⏣⎈¶⎇®§┼⋃⟎✕¥☡∈ƒ⦸¡⏦⯐│☍⎌⊙℗⧉∿∫⟲⍟⍝⏥⌮⎚⏧∅⠁⠃⠇⠏⠟⠿⡿⣿⢀")
+        };
+
+        Object.keys(SYMBOL_CATALOG).forEach(k => {
+            SYMBOL_CATALOG[k] = [...new Set(SYMBOL_CATALOG[k])].filter(x => x.trim() !== "" && x !== "\uFE0F" && x !== "\u200D");
+        });
+
+        let encryptSeq = 0, decryptSeq = 0;
+        let encryptDirty = false, decryptDirty = false;
+        let pickerCloseTimer;
+        const translateCache = new Map();
+        let currentTargetChar = null;
+        let currentPickerTab = 'emoji';
+        
+        let keyMap = {};
+        let currentCaseIndex = 0; 
+        const MAX_CASES = 10;
+        const MAX_SYMBOL_LEN = 4; // số ký hiệu tối đa mỗi ô
+
+        let encryptTimeout;
+        let decryptTimeout;
+
+        window.onload = function() {
+            ALL_KEYS.forEach(key => keyMap[key] = Array(MAX_CASES).fill(""));
+            loadMappingFromStorage(false);
+            loadMappingFromHash();
+            renderMappingGrid();
+            updateMappedCount();
+        };
+
+        function changeCaseIndex(index) {
+            currentCaseIndex = parseInt(index);
+            renderMappingGrid();
+        }
+
+        function renderMappingGrid() {
+            renderGroup('group-uppercase', UPPERCASE);
+            renderGroup('group-lowercase', LOWERCASE);
+            renderGroup('group-digits', [...DIGITS, ...SPECIAL]);
+        }
+
+        function renderGroup(groupId, charList) {
+            const container = document.getElementById(groupId);
+            container.innerHTML = "";
+            charList.forEach(char => {
+                const label = char === " " ? "Space" : char;
+                const val = keyMap[char][currentCaseIndex] || ""; 
+                const item = document.createElement("div");
+                item.className = "bg-slate-950/80 border border-slate-800 rounded-xl p-2 pl-3 flex items-center justify-between gap-3 hover:border-slate-700 transition";
+                item.innerHTML = `
+                    <span class="text-xs font-mono font-bold text-slate-400 min-w-[16px]">${label}</span>
+                    <i class="fa-solid fa-arrow-right-long text-slate-600 text-[10px]"></i>
+                    <div class="flex items-center gap-1.5 w-full flex-1">
+                        <input type="text" data-char="${char}" value="${escapeHtml(val)}" 
+                            oninput="updateSingleKey(this)" placeholder="Trống"
+                            class="symbol-input flex-1 w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-center text-emerald-400 font-mono focus:outline-none focus:border-brand-500 transition">
+                        <button onclick="openSymbolPicker('${char}')" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-1.5 rounded-lg border border-slate-700 transition flex items-center justify-center h-8 w-9 shadow-sm shrink-0">
+                            <i class="fa-solid fa-list-ul text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function refreshActive() {
+            const encHidden = document.getElementById('workspace-encrypt').classList.contains('hidden');
+            if (encHidden) { encryptDirty = true; handleDecrypt(); }
+            else { decryptDirty = true; handleEncrypt(); }
+        }
+
+        function updateSingleKey(inputElem) {
+            const char = inputElem.getAttribute("data-char");
+            const g = toGraphemes(inputElem.value.replace(/\s+/g, "")).slice(0, MAX_SYMBOL_LEN);
+            const val = g.join("");
+            if (inputElem.value !== val) inputElem.value = val;
+            keyMap[char][currentCaseIndex] = val;
+            updateMappedCount();
+            refreshActive();
+        }
+
+        function chunkText(text, max) {
+            const pieces = text.split(/(?<=[.!?\n])/).filter(Boolean);
+            const chunks = [];
+            let cur = "";
+            for (let piece of pieces) {
+                while (piece.length > max) {
+                    if (cur) { chunks.push(cur); cur = ""; }
+                    chunks.push(piece.slice(0, max));
+                    piece = piece.slice(max);
+                }
+                if (cur && (cur + piece).length > max) { chunks.push(cur); cur = piece; }
+                else cur += piece;
+            }
+            if (cur) chunks.push(cur);
+            return chunks;
+        }
+
+        async function translateText(text, fromLang, toLang) {
+            const key = `${fromLang}|${toLang}|${text}`;
+            if (translateCache.has(key)) return translateCache.get(key);
+            const parts = [];
+            for (const chunk of chunkText(text, 450)) {
+                if (!chunk.trim()) continue;
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk.trim())}&langpair=${fromLang}|${toLang}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const out = data && data.responseData && data.responseData.translatedText;
+                if (Number(data && data.responseStatus) !== 200 || typeof out !== "string" || /MYMEMORY WARNING/i.test(out)) {
+                    throw new Error((data && typeof data.responseDetails === "string" && data.responseDetails) || "Bộ dịch trả về lỗi");
+                }
+                parts.push(out);
+            }
+            const result = parts.join(" ");
+            translateCache.set(key, result);
+            return result;
+        }
+
+        function buildEncryptedString(sourceText) {
+            let result = "";
+            for (let char of sourceText) {
+                if (Object.hasOwn(keyMap, char)) {
+                    const availableSymbols = keyMap[char].filter(v => v !== "");
+                    if (availableSymbols.length > 0) {
+                        const randomSymbol = availableSymbols[Math.floor(Math.random() * availableSymbols.length)];
+                        result += randomSymbol;
+                    } else {
+                        result += char; 
+                    }
+                } else {
+                    result += char; 
+                }
+            }
+            return result;
+        }
+
+        function showOutputError(id, msg) {
+            const el = document.getElementById(id);
+            el.innerHTML = '<span class="text-rose-400 text-sm font-sans"></span>';
+            el.firstChild.textContent = msg;
+        }
+
+        function handleEncrypt() {
+            clearTimeout(encryptTimeout);
+            const seq = ++encryptSeq; // vô hiệu hóa mọi request dịch cũ
+            encryptDirty = false;
+
+            const plainText = document.getElementById("plainTextInput").value;
+            document.getElementById("plainTextCharCount").innerText = `${Array.from(plainText).length} ký tự`;
+
+            if (!plainText) {
+                document.getElementById("encryptedOutput").innerHTML = `<span class="text-slate-600 text-sm italic font-sans">Kết quả đã mã hóa sẽ xuất hiện ở đây...</span>`;
+                document.getElementById("intermediateEnBox").classList.add("hidden");
+                return;
+            }
+
+            if (document.getElementById("translateToEnToggle").checked) {
+                document.getElementById("encryptedOutput").innerHTML = `<i class="fa-solid fa-spinner fa-spin text-brand-400"></i> Đang dịch sang Tiếng Anh để mã hóa...`;
+                encryptTimeout = setTimeout(async () => {
+                    try {
+                        const translatedEn = await translateText(plainText, 'vi', 'en');
+                        if (seq !== encryptSeq) return;
+                        document.getElementById("intermediateEnBox").classList.remove("hidden");
+                        document.getElementById("intermediateEnText").innerText = translatedEn;
+                        document.getElementById("encryptedOutput").innerText = buildEncryptedString(translatedEn);
+                    } catch (error) {
+                        if (seq !== encryptSeq) return;
+                        console.error("Lỗi API Dịch:", error);
+                        showOutputError("encryptedOutput", `Không dịch được (${error.message}). Hãy thử lại hoặc tắt "Dịch sang Tiếng Anh" để mã hóa trực tiếp.`);
+                        showToast("Lỗi bộ dịch, chưa mã hóa.", "wifi", "rose");
+                    }
+                }, 1000);
+            } else {
+                document.getElementById("intermediateEnBox").classList.add("hidden");
+                document.getElementById("encryptedOutput").innerText = buildEncryptedString(plainText);
+            }
+        }
+
+        function decodeCipher(cipherText) {
+            const bySymbol = new Map();
+            for (const [origChar, arr] of Object.entries(keyMap)) {
+                for (const sym of arr) if (sym !== "" && !bySymbol.has(sym)) bySymbol.set(sym, origChar);
+            }
+            const pairs = [...bySymbol].sort((a, b) => b[0].length - a[0].length);
+            let i = 0, out = "";
+            while (i < cipherText.length) {
+                const hit = pairs.find(([sym]) => cipherText.startsWith(sym, i));
+                if (hit) { out += hit[1]; i += hit[0].length; }
+                else {
+                    const ch = String.fromCodePoint(cipherText.codePointAt(i));
+                    out += ch; i += ch.length;
+                }
+            }
+            return out;
+        }
+
+        function handleDecrypt() {
+            clearTimeout(decryptTimeout);
+            const seq = ++decryptSeq;
+            decryptDirty = false;
+
+            const cipherText = document.getElementById("cipherInput").value;
+            document.getElementById("cipherCharCount").innerText = `${toGraphemes(cipherText).length} ký tự`;
+
+            if (!cipherText) {
+                document.getElementById("decryptedOutput").innerHTML = `<span class="text-slate-600 text-sm italic font-sans">Kết quả giải mã sẽ xuất hiện ở đây...</span>`;
+                document.getElementById("intermediateViBox").classList.add("hidden");
+                return;
+            }
+
+            const rawDecryptedText = decodeCipher(cipherText);
+
+            if (document.getElementById("translateToViToggle").checked) {
+                document.getElementById("decryptedOutput").innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Đang dịch kết quả về Tiếng Việt...`;
+                document.getElementById("intermediateViBox").classList.remove("hidden");
+                document.getElementById("intermediateViText").innerText = rawDecryptedText;
+                decryptTimeout = setTimeout(async () => {
+                    try {
+                        const translatedVi = await translateText(rawDecryptedText, 'en', 'vi');
+                        if (seq !== decryptSeq) return;
+                        document.getElementById("decryptedOutput").innerText = translatedVi;
+                    } catch (error) {
+                        if (seq !== decryptSeq) return;
+                        console.error("Lỗi API Dịch:", error);
+                        showOutputError("decryptedOutput", `Không dịch được (${error.message}). Bản Tiếng Anh sau giải mã nằm ở dòng phía trên.`);
+                        showToast("Lỗi bộ dịch.", "wifi", "rose");
+                    }
+                }, 1000);
+            } else {
+                document.getElementById("intermediateViBox").classList.add("hidden");
+                document.getElementById("decryptedOutput").innerText = rawDecryptedText;
+            }
+        }
+
+        // --- Các Modal và Tiện Ích ---
+        function switchWorkspace(mode) {
+            if (mode === 'encrypt' ? encryptDirty : decryptDirty) setTimeout(mode === 'encrypt' ? handleEncrypt : handleDecrypt, 0);
+            const encBtn = document.getElementById('mode-btn-encrypt');
+            const decBtn = document.getElementById('mode-btn-decrypt');
+            const encPanel = document.getElementById('workspace-encrypt');
+            const decPanel = document.getElementById('workspace-decrypt');
+
+            if (mode === 'encrypt') {
+                encBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md";
+                decBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800";
+                encPanel.classList.remove('hidden');
+                decPanel.classList.add('hidden');
+            } else {
+                decBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 bg-brand-600 text-white shadow-md";
+                encBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 text-slate-400 hover:bg-slate-800";
+                decPanel.classList.remove('hidden');
+                encPanel.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = "tab-btn font-medium px-3 py-1 rounded-lg text-slate-400 hover:bg-slate-800");
+            document.getElementById(`tab-${tabName}`).className = "tab-btn font-medium px-3 py-1 rounded-lg bg-brand-600 text-white";
+            document.querySelectorAll('.tab-group').forEach(group => group.classList.add('hidden'));
+            document.getElementById(`group-${tabName}`).classList.remove('hidden');
+        }
+
+        function openSymbolPicker(char) {
+            clearTimeout(pickerCloseTimer);
+            currentTargetChar = char;
+            document.getElementById('pickerTargetLabel').innerText = char === " " ? "Space" : char;
+            const modal = document.getElementById('symbolPickerModal');
+            const content = document.getElementById('symbolPickerContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            renderPickerGrid();
+        }
+
+        function closeSymbolPicker() {
+            const modal = document.getElementById('symbolPickerModal');
+            const content = document.getElementById('symbolPickerContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            clearTimeout(pickerCloseTimer);
+            pickerCloseTimer = setTimeout(() => {
+                modal.classList.add('hidden');
+                currentTargetChar = null;
+            }, 200);
+        }
+
+        function switchPickerTab(tab) {
+            currentPickerTab = tab;
+            document.querySelectorAll('.p-tab-btn').forEach(btn => btn.className = "p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition flex items-center justify-center gap-2");
+            document.getElementById(`p-tab-${tab}`).className = "p-tab-btn flex-1 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white transition flex items-center justify-center gap-2 shadow-md";
+            renderPickerGrid();
+        }
+
+        function renderPickerGrid() {
+            const grid = document.getElementById('pickerGrid');
+            grid.innerHTML = '';
+            SYMBOL_CATALOG[currentPickerTab].forEach(sym => {
+                const btn = document.createElement('button');
+                btn.className = "h-10 text-xl flex items-center justify-center bg-slate-900 border border-slate-800/50 rounded-lg hover:border-brand-500 hover:bg-slate-800 hover:scale-110 hover:z-10 transition cursor-pointer";
+                btn.innerText = sym;
+                btn.onclick = () => selectSymbolFromPicker(sym);
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectSymbolFromPicker(sym) {
+            if (currentTargetChar !== null) {
+                keyMap[currentTargetChar][currentCaseIndex] = sym;
+                const input = document.querySelector(`input[data-char="${currentTargetChar}"]`);
+                if (input) {
+                    input.value = sym;
+                    input.classList.add('border-emerald-500', 'bg-emerald-500/10');
+                    setTimeout(() => input.classList.remove('border-emerald-500', 'bg-emerald-500/10'), 500);
+                }
+                updateMappedCount();
+                refreshActive();
+                closeSymbolPicker();
+            }
+        }
+
+        function clearAllMappings() {
+            ALL_KEYS.forEach(key => keyMap[key] = Array(MAX_CASES).fill(""));
+            renderMappingGrid();
+            updateMappedCount();
+            refreshActive();
+            showToast('Đã xóa tất cả', 'trash', 'rose');
+        }
+
+        function computeConflicts() {
+            const owner = new Map(), bad = new Set();
+            for (const [ch, arr] of Object.entries(keyMap)) {
+                for (const sym of arr) {
+                    if (!sym) continue;
+                    if (owner.has(sym) && owner.get(sym) !== ch) bad.add(sym); // 1 ký hiệu cho 2 ký tự
+                    else owner.set(sym, ch);
+                    // ký hiệu trùng với 1 ký tự chưa gán (được giữ nguyên khi mã hóa)
+                    if (Object.hasOwn(keyMap, sym) && sym !== ch && !keyMap[sym].some(v => v)) bad.add(sym);
+                }
+            }
+            // ký hiệu này là tiền tố của ký hiệu khác (gán cho ký tự khác) -> giải mã mơ hồ
+            const entries = [...owner];
+            for (const [a, ca] of entries)
+                for (const [b, cb] of entries)
+                    if (a !== b && ca !== cb && b.startsWith(a)) { bad.add(a); bad.add(b); }
+            return bad;
+        }
+
+        function updateMappedCount() {
+            const count = Object.values(keyMap).filter(arr => arr.some(v => v !== "")).length;
+            const conflicts = computeConflicts();
+            const label = document.getElementById("mappedCountLabel");
+            label.innerText = `Số ký tự đã gán: ${count} / ${ALL_KEYS.length}` + (conflicts.size ? ` — ⚠ ${conflicts.size} ký hiệu trùng/gây nhầm (giải mã sẽ sai)` : "");
+            label.classList.toggle("text-rose-400", conflicts.size > 0);
+            updateActivePresetLabel();
+            document.querySelectorAll("#mappingGridContainer input[data-char]").forEach(inp => {
+                inp.style.borderColor = inp.value && conflicts.has(inp.value) ? "#f43f5e" : "";
+            });
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            if (!text || text.includes("xuất hiện ở đây") || text.includes("Đang dịch")) {
+                showToast("Chưa có nội dung!", "triangle-exclamation", "amber");
+                return;
+            }
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            showToast("Đã copy!", "copy", "emerald");
+            document.body.removeChild(textarea);
+        }
+
+        function migrateLegacyMap(raw) {
+            const out = {};
+            ALL_KEYS.forEach(k => {
+                const v = raw && typeof raw === "object" && Object.hasOwn(raw, k) ? raw[k] : [];
+                const arr = Array.isArray(v) ? v : [v];
+                out[k] = Array.from({ length: MAX_CASES }, (_, i) => typeof arr[i] === "string" ? arr[i] : "");
+            });
+            return out;
+        }
+
+        const PRESET_KEY = "cipher_craft_presets_v1";
+        const ACTIVE_PRESET_KEY = "cipher_craft_active_preset";
+        let presets = [];
+        let activePresetId = null;
+        let renamingId = null;
+        const armed = { key: null, timer: null };
+
+        function compactKeyMap(map) {
+            const m = {};
+            for (const [ch, arr] of Object.entries(map)) {
+                const a = arr.slice();
+                while (a.length && a[a.length - 1] === "") a.pop();
+                if (a.length) m[ch] = a;
+            }
+            return m;
+        }
+
+        function countMapped(m) { return Object.values(m).filter(a => Array.isArray(a) && a.some(v => v)).length; }
+        function newPresetId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+        function readPresets() {
+            let raw = null;
+            try {
+                raw = localStorage.getItem(PRESET_KEY);
+                const data = JSON.parse(raw || "null");
+                if (data && Array.isArray(data.presets)) {
+                    return data.presets.filter(p => p && typeof p.id === "string" && typeof p.name === "string" && p.m && typeof p.m === "object");
+                }
+            } catch (err) {
+                console.error("Danh sách bảng mã bị hỏng:", err);
+                try { if (raw) localStorage.setItem(PRESET_KEY + "_corrupt", raw); } catch (e) {} // giữ bản sao để cứu dữ liệu
+            }
+            return [];
+        }
+
+        function writePresets() {
+            try {
+                localStorage.setItem(PRESET_KEY, JSON.stringify({ version: 1, presets }));
+                if (activePresetId) localStorage.setItem(ACTIVE_PRESET_KEY, activePresetId);
+                else localStorage.removeItem(ACTIVE_PRESET_KEY);
+                return true;
+            } catch (err) {
+                showToast("Không lưu được (trình duyệt chặn hoặc hết dung lượng).", "triangle-exclamation", "rose");
+                return false;
+            }
+        }
+
+        function isDirty() {
+            const active = presets.find(p => p.id === activePresetId);
+            const cur = JSON.stringify(compactKeyMap(keyMap));
+            return active ? cur !== JSON.stringify(active.m) : cur !== "{}";
+        }
+
+        function updateActivePresetLabel() {
+            const el = document.getElementById("activePresetLabel");
+            if (!el) return;
+            const active = presets.find(p => p.id === activePresetId);
+            if (!active) { el.textContent = "· chưa lưu"; el.title = ""; return; }
+            const dirty = isDirty();
+            el.textContent = `· ${active.name}${dirty ? " ●" : ""}`;
+            el.title = dirty ? "Có thay đổi chưa lưu" : "";
+        }
+
+        function loadMappingFromStorage(notify = true) {
+            presets = readPresets();
+            try {
+                if (!presets.length) {
+                    // chuyển bảng mã đơn lẻ kiểu cũ thành 1 preset
+                    const legacy = localStorage.getItem("cipher_craft_mapping_v2.1") || localStorage.getItem("cipher_craft_mapping_v2");
+                    if (legacy) {
+                        presets.push({ id: newPresetId(), name: "Bảng mã đã lưu", updatedAt: Date.now(), m: compactKeyMap(migrateLegacyMap(JSON.parse(legacy))) });
+                        activePresetId = presets[0].id;
+                        writePresets();
+                    }
+                } else {
+                    const id = localStorage.getItem(ACTIVE_PRESET_KEY);
+                    if (presets.some(p => p.id === id)) activePresetId = id;
+                }
+                const active = presets.find(p => p.id === activePresetId);
+                if (active) {
+                    keyMap = migrateLegacyMap(active.m);
+                    if (notify) showToast(`Đã tải «${active.name}»`, "folder-open", "emerald");
+                }
+            } catch (err) {
+                console.error("Bảng mã đã lưu bị hỏng:", err);
+                keyMap = migrateLegacyMap({});
+                showToast("Bảng mã đã lưu bị hỏng, đã đặt lại.", "triangle-exclamation", "rose");
+            }
+            updateActivePresetLabel();
+        }
+
+        // Nút "Lưu": ghi vào bảng mã đang dùng; chưa có thì mở Quản lý bảng mã để đặt tên
+        function saveMappingToStorage() {
+            const active = presets.find(p => p.id === activePresetId);
+            if (!active) { openPresetManager(); return; }
+            const prev = { m: active.m, updatedAt: active.updatedAt };
+            active.m = compactKeyMap(keyMap);
+            active.updatedAt = Date.now();
+            if (!writePresets()) { active.m = prev.m; active.updatedAt = prev.updatedAt; return; }
+            showToast(`Đã lưu «${active.name}»!`, "floppy-disk", "emerald");
+            updateActivePresetLabel();
+            renderPresetList();
+        }
+
+        function confirmTwice(key) {
+            clearTimeout(armed.timer);
+            if (armed.key === key) { armed.key = null; return true; }
+            armed.key = key;
+            armed.timer = setTimeout(() => { armed.key = null; renderPresetList(); }, 3000);
+            renderPresetList();
+            return false;
+        }
+
+        function nameTaken(name, exceptId) {
+            return presets.some(p => p.id !== exceptId && p.name.toLowerCase() === name.toLowerCase());
+        }
+
+        function savePresetAsNew() {
+            const input = document.getElementById("presetNameInput");
+            const name = input.value.trim().slice(0, 40);
+            if (!name) { showToast("Hãy đặt tên cho bảng mã!", "triangle-exclamation", "amber"); input.focus(); return; }
+            if (nameTaken(name)) { showToast("Tên đã tồn tại, hãy chọn tên khác.", "triangle-exclamation", "amber"); return; }
+            if (countMapped(compactKeyMap(keyMap)) === 0) { showToast("Bảng mã đang trống!", "triangle-exclamation", "amber"); return; }
+            const prevActive = activePresetId;
+            const preset = { id: newPresetId(), name, updatedAt: Date.now(), m: compactKeyMap(keyMap) };
+            presets.push(preset);
+            activePresetId = preset.id;
+            if (!writePresets()) { presets.pop(); activePresetId = prevActive; return; }
+            input.value = "";
+            updateActivePresetLabel();
+            renderPresetList();
+            showToast(`Đã lưu «${name}»!`, "floppy-disk", "emerald");
+        }
+
+        function loadPreset(id) {
+            const p = presets.find(x => x.id === id);
+            if (!p) return;
+            if (isDirty() && !confirmTwice("load:" + id)) return;
+            keyMap = migrateLegacyMap(p.m);
+            activePresetId = id;
+            writePresets();
+            renderMappingGrid();
+            updateMappedCount();
+            refreshActive();
+            closePresetManager();
+            showToast(`Đã tải «${p.name}»`, "folder-open", "emerald");
+        }
+
+        function commitRename(id, value) {
+            const p = presets.find(x => x.id === id);
+            const name = value.trim().slice(0, 40);
+            if (!p) return;
+            if (!name) { showToast("Tên không được để trống!", "triangle-exclamation", "amber"); return; }
+            if (nameTaken(name, id)) { showToast("Tên đã tồn tại!", "triangle-exclamation", "amber"); return; }
+            const old = p.name;
+            p.name = name;
+            if (!writePresets()) { p.name = old; return; }
+            renamingId = null;
+            updateActivePresetLabel();
+            renderPresetList();
+        }
+
+        function deletePreset(id) {
+            if (!confirmTwice("del:" + id)) return;
+            const prevPresets = presets, prevActive = activePresetId;
+            presets = presets.filter(p => p.id !== id);
+            if (activePresetId === id) activePresetId = null;
+            if (!writePresets()) { presets = prevPresets; activePresetId = prevActive; return; }
+            updateActivePresetLabel();
+            renderPresetList();
+            showToast("Đã xóa bảng mã.", "trash", "rose");
+        }
+
+        function renderPresetList() {
+            const list = document.getElementById("presetList");
+            const note = document.getElementById("presetDirtyNote");
+            if (!list) return;
+            const dirty = isDirty();
+            note.classList.toggle("hidden", !dirty);
+            note.textContent = "⚠ Bảng mã đang làm việc có thay đổi chưa lưu; tải bảng mã khác sẽ bỏ các thay đổi này.";
+            list.innerHTML = "";
+            if (!presets.length) {
+                const e = document.createElement("div");
+                e.className = "text-sm text-slate-500 italic text-center py-6";
+                e.textContent = "Chưa có bảng mã nào được lưu.";
+                list.appendChild(e);
+                return;
+            }
+            const neutral = "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200";
+            const mk = (label, cls, fn) => {
+                const b = document.createElement("button");
+                b.textContent = label;
+                b.className = "px-2.5 py-1.5 text-xs rounded-lg border transition shrink-0 " + cls;
+                b.onclick = e => { e.stopPropagation(); fn(); };
+                return b;
+            };
+            [...presets].sort((a, b) => b.updatedAt - a.updatedAt).forEach(p => {
+                const isActive = p.id === activePresetId;
+                const row = document.createElement("div");
+                row.className = "flex flex-wrap items-center gap-2 p-3 rounded-xl border bg-slate-900 " + (isActive ? "border-brand-500" : "border-slate-800");
+                const info = document.createElement("div");
+                info.className = "flex-1 min-w-[8rem]";
+                let renameInput = null;
+                if (renamingId === p.id) {
+                    renameInput = document.createElement("input");
+                    renameInput.type = "text";
+                    renameInput.maxLength = 40;
+                    renameInput.value = p.name;
+                    renameInput.className = "w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-sm text-slate-100 focus:outline-none focus:border-brand-500";
+                    renameInput.onkeydown = e => {
+                        if (e.key === "Enter") commitRename(p.id, renameInput.value);
+                        if (e.key === "Escape") { renamingId = null; renderPresetList(); e.stopPropagation(); }
+                    };
+                    info.appendChild(renameInput);
+                    setTimeout(() => { renameInput.focus(); renameInput.select(); }, 0);
+                } else {
+                    const nm = document.createElement("div");
+                    nm.className = "text-sm font-semibold text-white truncate";
+                    nm.textContent = p.name + (isActive ? " (đang dùng)" : "");
+                    info.appendChild(nm);
+                }
+                const meta = document.createElement("div");
+                meta.className = "text-xs text-slate-500";
+                const warn = armed.key === "load:" + p.id;
+                meta.className = "text-xs " + (warn ? "text-amber-400" : "text-slate-500");
+                meta.textContent = warn ? "Có thay đổi chưa lưu, bấm lại để bỏ thay đổi và tải" : `${countMapped(p.m)}/${ALL_KEYS.length} ký tự · ${new Date(p.updatedAt).toLocaleString("vi-VN")}`;
+                info.appendChild(meta);
+                row.appendChild(info);
+                if (renameInput) {
+                    row.appendChild(mk("OK", neutral, () => commitRename(p.id, renameInput.value)));
+                } else {
+                    row.appendChild(mk("Xuất", neutral, () => exportPreset(p.id)));
+                    row.appendChild(mk("Đổi tên", neutral, () => { renamingId = p.id; renderPresetList(); }));
+                    row.appendChild(mk(armed.key === "del:" + p.id ? "Bấm lại để xóa" : "Xóa", "bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-400", () => deletePreset(p.id)));
+                }
+                if (!renameInput) {
+                    row.classList.add("cursor-pointer", "hover:border-brand-500");
+                    row.title = "Bấm để tải bảng mã này";
+                    row.onclick = () => loadPreset(p.id);
+                }
+                list.appendChild(row);
+            });
+        }
+
+        function downloadJSON(filename, obj) {
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function safeFileName(name) { return name.replace(/[\\/:*?"<>|]+/g, "_").trim() || "bang-ma"; }
+
+        // Xuất 1 bảng mã: cùng định dạng với nút "Xuất" trên header, nên nút "Nhập" cũng đọc được
+        function exportPreset(id) {
+            const p = presets.find(x => x.id === id);
+            if (!p) return;
+            downloadJSON(`${safeFileName(p.name)}.json`, migrateLegacyMap(p.m));
+            showToast(`Đã xuất «${p.name}»`, "file-export", "emerald");
+        }
+
+        function exportAllPresets() {
+            if (!presets.length) { showToast("Chưa có bảng mã nào để xuất!", "triangle-exclamation", "amber"); return; }
+            downloadJSON("ciphercraft-presets-backup.json", {
+                app: "ciphercraft-presets",
+                version: 1,
+                presets: presets.map(({ name, updatedAt, m }) => ({ name, updatedAt, m }))
+            });
+            showToast(`Đã xuất ${presets.length} bảng mã`, "file-export", "emerald");
+        }
+
+        function uniqueName(name) {
+            const base = name.slice(0, 35);
+            let n = name.slice(0, 40), i = 2;
+            while (nameTaken(n)) n = `${base} (${i++})`;
+            return n;
+        }
+
+        // Nhập file sao lưu (nhiều bảng) hoặc file bảng mã đơn -> thêm vào danh sách, không ghi đè bảng nào
+        function importPresetFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const added = [];
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("bad format");
+                    if (data.app === "ciphercraft-presets" && Array.isArray(data.presets)) {
+                        data.presets.forEach(p => {
+                            if (p && typeof p.name === "string" && p.m && typeof p.m === "object" && !Array.isArray(p.m)) {
+                                const preset = { id: newPresetId(), name: uniqueName(p.name.trim() || "Bảng mã"), updatedAt: Number(p.updatedAt) || Date.now(), m: compactKeyMap(migrateLegacyMap(p.m)) };
+                                presets.push(preset);
+                                added.push(preset);
+                            }
+                        });
+                    } else {
+                        const m = compactKeyMap(migrateLegacyMap(data));
+                        if (countMapped(m) === 0) throw new Error("empty");
+                        const preset = { id: newPresetId(), name: uniqueName(file.name.replace(/\.json$/i, "").trim() || "Bảng mã nhập"), updatedAt: Date.now(), m };
+                        presets.push(preset);
+                        added.push(preset);
+                    }
+                    if (!added.length) throw new Error("empty");
+                    if (!writePresets()) { presets = presets.filter(p => !added.includes(p)); return; }
+                    renderPresetList();
+                    updateActivePresetLabel();
+                    showToast(`Đã nhập ${added.length} bảng mã`, "file-import", "emerald");
+                } catch (err) {
+                    presets = presets.filter(p => !added.includes(p));
+                    showToast("File lỗi hoặc không đúng định dạng!", "triangle-exclamation", "rose");
+                }
+            };
+            reader.onloadend = () => { event.target.value = ""; };
+            reader.readAsText(file);
+        }
+
+        function importIntoCurrentCase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("bad format");
+                    let n = 0;
+                    for (const [ch, v] of Object.entries(data)) {
+                        if (!Object.hasOwn(keyMap, ch)) continue;
+                        // file 1 lớp: lấy ký hiệu; file nhiều lớp: lấy ký hiệu đầu tiên không rỗng
+                        const raw = Array.isArray(v) ? v.find(x => typeof x === "string" && x !== "") : v;
+                        if (typeof raw !== "string") continue;
+                        const clean = toGraphemes(raw.replace(/\s+/g, "")).slice(0, MAX_SYMBOL_LEN).join("");
+                        if (!clean) continue;
+                        keyMap[ch][currentCaseIndex] = clean;
+                        n++;
+                    }
+                    if (!n) throw new Error("empty");
+                    renderMappingGrid();
+                    updateMappedCount();
+                    refreshActive();
+                    showToast(`Đã nhập ${n} ký tự vào Trường hợp ${currentCaseIndex + 1}!`, "file-import", "emerald");
+                } catch (err) {
+                    showToast("File lỗi hoặc không có ký hiệu hợp lệ!", "triangle-exclamation", "rose");
+                }
+            };
+            reader.onloadend = () => { event.target.value = ""; };
+            reader.readAsText(file);
+        }
+
+        function openPresetManager() {
+            document.getElementById("presetModal").classList.remove("hidden");
+            renderPresetList();
+        }
+
+        function closePresetManager() {
+            document.getElementById("presetModal").classList.add("hidden");
+            renamingId = null;
+            armed.key = null;
+            clearTimeout(armed.timer);
+        }
+
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape" && !document.getElementById("presetModal").classList.contains("hidden")) closePresetManager();
+        });
+
+        function bytesToB64Url(bytes) {
+            let bin = "";
+            bytes.forEach(b => bin += String.fromCharCode(b));
+            return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        }
+
+        function b64UrlToBytes(str) {
+            const b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+            const bin = atob(b64 + "=".repeat((4 - b64.length % 4) % 4));
+            return Uint8Array.from(bin, c => c.charCodeAt(0));
+        }
+
+        function encodeKeyMap() {
+            const m = {};
+            for (const [ch, arr] of Object.entries(keyMap)) {
+                const a = arr.slice();
+                while (a.length && a[a.length - 1] === "") a.pop();
+                if (a.length) m[ch] = a;
+            }
+            return bytesToB64Url(new TextEncoder().encode(JSON.stringify({ v: 1, m })));
+        }
+
+        function decodeKeyMap(str) {
+            const data = JSON.parse(new TextDecoder().decode(b64UrlToBytes(str)));
+            if (!data || data.v !== 1 || !data.m || typeof data.m !== "object") throw new Error("bad link");
+            return migrateLegacyMap(data.m);
+        }
+
+        function shareMappingLink() {
+            if (!Object.values(keyMap).some(a => a.some(v => v))) {
+                showToast("Bảng mã đang trống!", "triangle-exclamation", "amber");
+                return;
+            }
+            const url = location.href.split("#")[0] + "#key=" + encodeKeyMap();
+            const done = () => showToast("Đã copy link! Ai có link đều giải mã được.", "link", "emerald");
+            const fallback = () => {
+                const ta = document.createElement("textarea");
+                ta.value = url;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); done(); } catch (e) { prompt("Copy link này:", url); }
+                ta.remove();
+            };
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, fallback);
+            else fallback();
+        }
+
+        function loadMappingFromHash(notify = true) {
+            const m = location.hash.match(/^#key=([A-Za-z0-9_-]+)$/);
+            if (!m) return false;
+            try {
+                keyMap = decodeKeyMap(m[1]);
+                try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+                if (notify) showToast("Đã nạp bảng mã từ link (chưa lưu, bấm Lưu để giữ).", "link", "emerald");
+                return true;
+            } catch (err) {
+                showToast("Link bảng mã lỗi hoặc bị cắt cụt!", "triangle-exclamation", "rose");
+                return false;
+            }
+        }
+
+        window.addEventListener("hashchange", () => {
+            if (loadMappingFromHash()) {
+                renderMappingGrid();
+                updateMappedCount();
+                refreshActive();
+            }
+        });
+
+        function showToast(message, iconName = 'circle-check', color = 'emerald') {
+            const toast = document.getElementById("toast");
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+            document.getElementById("toastMessage").innerText = message;
+            document.getElementById("toastIcon").className = `fa-solid fa-${iconName} text-${color}-400 text-lg`;
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
